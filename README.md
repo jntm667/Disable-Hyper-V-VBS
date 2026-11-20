@@ -1,8 +1,7 @@
 # Disable-HyperV-VBS
 
-在 Windows 10/11 上关闭或重新开启（交互式选择）Hyper-V、虚拟机平台与
-「基于虚拟化的安全性」（VBS），适合需要 VMware/VirtualBox 性能、或排查虚拟化冲突的场景。
-运行后会先检查当前状态，再在菜单里选择操作。
+在 Windows 10/11 上交互式关闭或重新开启 Hyper-V、虚拟机平台与「基于虚拟化的安全性」（VBS），
+适合需要 VMware/VirtualBox 性能、或排查虚拟化冲突的场景。
 
 脚本可重复执行（幂等）：已经处于目标状态的项只记日志，不会重复改写。
 
@@ -22,26 +21,19 @@
 
 ## 下载
 
-直接下载 ZIP（无需 git，Windows PowerShell 中执行，下载后解压）：
-
-```powershell
-# GitHub
-Invoke-WebRequest -Uri "https://github.com/jntm667/Disable-Hyper-V-VBS/archive/refs/heads/main.zip" -OutFile Disable-HyperV-VBS.zip -UseBasicParsing
-
-# Gitee（国内加速，可选，内容与 GitHub 同步）
-Invoke-WebRequest -Uri "https://gitee.com/jntm667/disable-hyper-v-vbs/repository/archive/main.zip" -OutFile Disable-HyperV-VBS.zip -UseBasicParsing
-```
-
-或用 git 克隆：
+使用 git 克隆：
 
 ```bash
 git clone https://github.com/jntm667/Disable-Hyper-V-VBS.git
+```
 
-# Gitee 加速（可选）
+GitHub 访问不畅时，可用 Gitee 加速（内容与 GitHub 同步）：
+
+```bash
 git clone https://gitee.com/jntm667/disable-hyper-v-vbs.git
 ```
 
-解压后进入目录，两个脚本必须放在同一目录。GitHub 访问不畅时优先用 Gitee 地址。
+克隆后进入得到的目录即可。
 
 ## 使用
 
@@ -49,7 +41,7 @@ git clone https://gitee.com/jntm667/disable-hyper-v-vbs.git
 2. 脚本先显示当前状态（BCD、可选功能、注册表、VBS/Hypervisor 运行状态），再提示选择：
    `[1]` 关闭、`[2]` 开启（恢复）、`[3]` 仅查看状态、`[0]` 退出；
    直接回车使用按当前状态给出的默认项（已开启默认关闭，已关闭默认开启）。
-3. 操作完成后窗口停留，日志路径形如 `%TEMP%\HyperV-VBS_yyyyMMdd_HHmmss.log`。
+3. 操作完成后窗口会停留。
 4. 重启电脑生效。
 
 也可以在管理员 PowerShell 中手动运行（交互流程相同）：
@@ -116,33 +108,11 @@ Get-CimInstance Win32_DeviceGuard -Namespace root\Microsoft\Windows\DeviceGuard 
   受企业策略或合规要求管理的设备不要运行。
 - 如果启用了 BitLocker，修改 BCD 后小概率要求恢复密钥，重启前先确认密钥可用。
 - `vsmlaunchtype` 在个别版本可能不被 BCD 支持，脚本会记录 `[WARN]` 并继续。
-- 早期版本的 `-RestoreWindowsHello` 参数已移除：VBS 依赖 hypervisor 启动，
-  单独恢复 Windows Hello 场景值无法恢复增强型安全登录。
 - 开启模式按固定推荐值写入，不还原关闭前的原值；Credential Guard 使用
   `LsaCfgFlags=2`（无 UEFI 锁），需要 UEFI 锁请按 Microsoft 文档另行配置。
 - 设备若被 UEFI 锁定（`DeviceGuard\Locked=1`），需先在 UEFI 中清除锁定，
   否则开启值不生效。
 - 硬件不支持虚拟化（VT-x/AMD-V）或 VBS 时，开启后相关状态仍可能为未启用。
-
-## 恢复（重新开启）
-
-推荐直接运行启动器，在菜单中选择 `[2] 开启（恢复）`，重启后生效。
-也可以手动执行以下步骤：
-
-1. 恢复启动项：`bcdedit /set hypervisorlaunchtype auto`
-2. 按需重新启用功能：
-
-```powershell
-Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All -NoRestart
-Enable-WindowsOptionalFeature -Online -FeatureName HypervisorPlatform -NoRestart
-Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform -NoRestart
-```
-
-3. 打开 Windows 安全中心 → 设备安全性 → 内核隔离，按提示开启内存完整性。
-4. 重启。
-
-关闭时不记录注册表原值；开启模式按固定推荐值写入，功能开关与注册表值都会恢复。
-若需要 UEFI 锁定或其他自定义配置，请按 Microsoft 文档另行设置。
 
 ## 许可
 
